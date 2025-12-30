@@ -145,16 +145,33 @@ function getResponseSchema(spec: any, operation: any): any {
   const successCodes = responseCodes.filter(code => /^2\d{2}$/.test(code)).sort();
   
   for (const code of successCodes) {
-    const response = responses[code];
+    let response = responses[code];
+    if (!response) continue;
+
+    // Dereference response if it's a $ref
+    if (response.$ref) {
+      response = resolveRef(spec, response.$ref);
+    }
+    
     if (response) {
       // OpenAPI 3.x
       if (response.content) {
         const mediaType = response.content['application/json'] || response.content['*/*'] || Object.values(response.content)[0];
-        return (mediaType as any)?.schema;
+        let schema = (mediaType as any)?.schema;
+        // Dereference schema if needed
+        if (schema?.$ref) {
+          schema = resolveRef(spec, schema.$ref);
+        }
+        return schema;
       }
       // OpenAPI 2.x / Swagger
       if (response.schema) {
-        return response.schema;
+        let schema = response.schema;
+        // Dereference schema if needed
+        if (schema.$ref) {
+          schema = resolveRef(spec, schema.$ref);
+        }
+        return schema;
       }
     }
   }
