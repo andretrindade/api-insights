@@ -140,8 +140,9 @@ function getResponseSchema(spec: any, operation: any): any {
   const responses = operation.responses;
   if (!responses) return null;
 
-  // Try common success codes
-  const successCodes = ['200', '201', '202', '204', 'default'];
+  // Only check 2xx status codes
+  const responseCodes = Object.keys(responses);
+  const successCodes = responseCodes.filter(code => /^2\d{2}$/.test(code)).sort();
   
   for (const code of successCodes) {
     const response = responses[code];
